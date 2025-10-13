@@ -84,12 +84,23 @@ export const sendMessage = async (req: Request, res: Response) => {
     content,
   });
 
+  const updatedConversation = await ChatService.getConversationWithMessages(
+    userId,
+    conversationId
+  );
+
   res.status(201).json({
     message: "Message sent successfully",
     userMessage: result.userMessage,
     aiMessage: result.aiMessage,
     creditsUsed: result.creditsUsed,
     remainingCredits: result.remainingCredits,
+    conversation: {
+      id: updatedConversation.id,
+      title: updatedConversation.title,
+      createdAt: updatedConversation.createdAt,
+      updatedAt: updatedConversation.updatedAt,
+    },
   });
 };
 

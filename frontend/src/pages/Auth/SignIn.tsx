@@ -2,40 +2,22 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/16/solid";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../Contexts/AuthContext";
-import { AuthService } from "../../services/AuthService";
 
 const SignIn = () => {
-  const navigate = useNavigate();
-  const { signin } = useAuth();
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-    passwordConfirm: "",
-  });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const { signin, isLoading } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-
     try {
-      const response = await AuthService.signIn(formData);
-      signin(response.token, response.user);
+      await signin(username, password);
       navigate("/chat");
-    } catch (err: any) {
-      setError(err.message || "Sign in failed");
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.log("Signin failed:", err);
     }
   };
   return (
@@ -60,11 +42,11 @@ const SignIn = () => {
               <input
                 id="username"
                 name="username"
-                value={formData.username}
+                value={username}
                 required
                 placeholder="Choose a username"
                 type="text"
-                onChange={handleChange}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-4 py-2 placeholder-slate-500 rounded-xl focus:outline-none shadow-inner"
               />
             </div>
@@ -79,11 +61,11 @@ const SignIn = () => {
                 <input
                   id="password"
                   name="password"
-                  value={formData.password}
+                  value={password}
                   required
                   placeholder="Create a password"
                   type={showPassword ? "text" : "password"}
-                  onChange={handleChange}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full px-4 py-2 placeholder-slate-500 pr-12 rounded-xl focus:outline-none shadow-inner"
                 />
                 <button
@@ -100,18 +82,12 @@ const SignIn = () => {
               </div>
             </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-2xl transition-colors duration-200"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {isLoading ? "Signing in..." : "Sign In"}
             </button>
 
             <div className="text-center">

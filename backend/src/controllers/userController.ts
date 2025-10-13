@@ -32,43 +32,84 @@ export const getUserStats = async (req: Request, res: Response) => {
 };
 
 export const getUserCredits = async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
+  try {
+    const userId = req.user?.userId;
 
-  if (!userId) {
-    return res.status(401).json({
-      error: "Authentication required",
-      message: "User ID not found in token",
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required",
+        message: "User ID not found in token",
+      });
+    }
+
+    const credits = await UserService.getUserCredits(userId);
+    res.json(credits);
+  } catch (error) {
+    console.error("Get user credits error:", error);
+
+    if (error instanceof Error && error.message === "User not found") {
+      return res.status(404).json({
+        error: "User not found",
+        message: error.message,
+      });
+    }
+
+    res.status(500).json({
+      error: "Failed to get user credits",
+      message: "An unexpected error occurred",
     });
   }
-
-  const credits = await UserService.getUserCredits(userId);
-  res.json(credits);
 };
 
 export const addCredits = async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const { amount, reason } = req.body;
+  try {
+    const userId = req.user?.userId;
+    const { amount, reason } = req.body;
 
-  if (!userId) {
-    return res.status(401).json({
-      error: "Authentication required",
-      message: "User ID not found in token",
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required",
+        message: "User ID not found in token",
+      });
+    }
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({
+        error: "Invalid input",
+        message: "Amount must be a positive number",
+      });
+    }
+
+    const user = await UserService.addCredits(userId, amount, reason);
+
+    res.json({
+      message: "Credits added successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Add credits error:", error);
+
+    if (error instanceof Error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({
+          error: "User not found",
+          message: error.message,
+        });
+      }
+
+      if (error.message.includes("Cannot add more than")) {
+        return res.status(400).json({
+          error: "Invalid amount",
+          message: error.message,
+        });
+      }
+    }
+
+    res.status(500).json({
+      error: "Failed to add credits",
+      message: "An unexpected error occurred",
     });
   }
-
-  if (!amount || amount <= 0) {
-    return res.status(400).json({
-      error: "Invalid input",
-      message: "Amount must be a positive number",
-    });
-  }
-
-  const user = await UserService.addCredits(userId, amount, reason);
-
-  res.json({
-    message: "Credits added successfully",
-    user,
-  });
 };
 
 export const getUserProfile = async (req: Request, res: Response) => {
@@ -102,49 +143,98 @@ export const getUserProfile = async (req: Request, res: Response) => {
 };
 
 export const updateUserProfile = async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const { email } = req.body;
+  try {
+    const userId = req.user?.userId;
+    const { email } = req.body;
 
-  if (!userId) {
-    return res.status(401).json({
-      error: "Authentication required",
-      message: "User ID not found in token",
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required",
+        message: "User ID not found in token",
+      });
+    }
+
+    const user = await UserService.updateUserProfile(userId, { email });
+
+    res.json({
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Update user profile error:", error);
+
+    if (error instanceof Error) {
+      if (error.message === "User not found") {
+        return res.status(404).json({
+          error: "User not found",
+          message: error.message,
+        });
+      }
+
+      if (error.message.includes("already taken")) {
+        return res.status(409).json({
+          error: "Email already taken",
+          message: error.message,
+        });
+      }
+    }
+
+    res.status(500).json({
+      error: "Failed to update profile",
+      message: "An unexpected error occurred",
     });
   }
-
-  const user = await UserService.updateUserProfile(userId, { email });
-
-  res.json({
-    message: "Profile updated successfully",
-    user,
-  });
 };
 
 export const getUserActivity = async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
-  const limit = parseInt(req.query.limit as string) || 10;
+  try {
+    const userId = req.user?.userId;
+    const limit = parseInt(req.query.limit as string) || 10;
 
-  if (!userId) {
-    return res.status(401).json({
-      error: "Authentication required",
-      message: "User ID not found in token",
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required",
+        message: "User ID not found in token",
+      });
+    }
+
+    const activity = await UserService.getUserActivity(userId, limit);
+    res.json(activity);
+  } catch (error) {
+    console.error("Get user activity error:", error);
+    res.status(500).json({
+      error: "Failed to get user activity",
+      message: "An unexpected error occurred",
     });
   }
-
-  const activity = await UserService.getUserActivity(userId, limit);
-  res.json(activity);
 };
 
 export const deleteUserAccount = async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
+  try {
+    const userId = req.user?.userId;
 
-  if (!userId) {
-    return res.status(401).json({
-      error: "Authentication required",
-      message: "User ID not found in token",
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required",
+        message: "User ID not found in token",
+      });
+    }
+
+    const result = await UserService.deleteUser(userId);
+    res.json(result);
+  } catch (error) {
+    console.error("Delete user account error:", error);
+
+    if (error instanceof Error && error.message === "User not found") {
+      return res.status(404).json({
+        error: "User not found",
+        message: error.message,
+      });
+    }
+
+    res.status(500).json({
+      error: "Failed to delete user account",
+      message: "An unexpected error occurred",
     });
   }
-
-  const result = await UserService.deleteUser(userId);
-  res.json(result);
 };
