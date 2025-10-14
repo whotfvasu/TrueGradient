@@ -6,7 +6,6 @@ import authRoutes from "./routes/authRoute";
 import chatRoutes from "./routes/chatRoute";
 import userRoutes from "./routes/userRoute";
 import { prisma } from "./lib/prisma";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 

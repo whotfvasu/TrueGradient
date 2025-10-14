@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { extractTokenFromHeader, JWTPayload, verifyToken } from "../utils/jwt";
+import { extractTokenFromHeader, JWTPayload, verifyToken } from "../utils/jwt.js";
 
 declare global {
   namespace Express {

@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
-import { GeminiService, ChatMessage } from "./geminiService";
-import { UserService } from "./userService";
+import { GeminiService, ChatMessage } from "./geminiService.js";
+import { UserService } from "./userService.js";
 
 export interface CreateConversationData {
   userId: string;
