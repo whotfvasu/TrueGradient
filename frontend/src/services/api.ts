@@ -1,7 +1,7 @@
-const API_BASE = "http://localhost:3001/api";
+const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 export const api = {
-
   async signin(username: string, password: string) {
     const response = await fetch(`${API_BASE}/auth/signin`, {
       method: "POST",
@@ -105,5 +105,3 @@ export const api = {
     return response.json();
   },
 };
-
-
