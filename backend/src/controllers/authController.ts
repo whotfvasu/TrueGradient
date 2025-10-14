@@ -3,7 +3,7 @@ import {
   AuthService,
   SignupData,
   SigninData,
-} from "../services/authService.js";
+} from "../services/authService";
 
 export const signup = async (req: Request, res: Response) => {
   try {

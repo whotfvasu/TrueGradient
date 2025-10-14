@@ -3,9 +3,9 @@ import {
   comparePassword,
   validatePassword,
 } from "../utils/bcrypt.js";
-import { validateUsername, validateEmail } from "../utils/validation.js";
-import { generateToken } from "../utils/jwt.js";
-import { prisma } from "../lib/prisma.js";
+import { validateUsername, validateEmail } from "../utils/validation";
+import { generateToken } from "../utils/jwt";
+import { prisma } from "../lib/prisma";
 
 export interface SignupData {
   username: string;

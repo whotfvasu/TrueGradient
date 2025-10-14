@@ -8,7 +8,7 @@ import {
   getUserActivity,
   deleteUserAccount,
 } from "../controllers/userController.js";
-import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 

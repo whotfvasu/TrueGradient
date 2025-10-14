@@ -2,10 +2,10 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import authRoutes from "./routes/authRoute.js";
-import chatRoutes from "./routes/chatRoute.js";
-import userRoutes from "./routes/userRoute.js";
-import { prisma } from "./lib/prisma.js";
+import authRoutes from "./routes/authRoute";
+import chatRoutes from "./routes/chatRoute";
+import userRoutes from "./routes/userRoute";
+import { prisma } from "./lib/prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();

@@ -7,7 +7,7 @@ import {
   deleteConversation,
   updateConversation,
 } from "../controllers/chatController.js";
-import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const router = Router();
 
