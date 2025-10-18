@@ -13,6 +13,7 @@ export const signup = async (req: Request, res: Response) => {
       password: req.body.password,
     };
 
+    // I am darshika 
     const result = await AuthService.signup(signupData);
 
     res.status(201).json({
