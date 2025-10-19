@@ -8,22 +8,77 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  email        String?  @unique
-  passwordHash String   @map("password_hash")
-  credits      Int      @default(1250)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  conversations Conversation[]
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username              String                 @unique
+  email                 String?                @unique
+  passwordHash          String                 @map("password_hash")
+  credits               Int                    @default(1250)
+  activeOrganizationId  String?                @map("active_organization_id") @db.Uuid
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+
+  conversations         Conversation[]
+  createdOrganizations  Organization[]         @relation("OrganizationCreator")
+  activeOrganization    Organization?          @relation("ActiveOrganization", fields: [activeOrganizationId], references: [id], onDelete: SetNull)
+  organizationMembers   OrganizationMember[]
+  sentInvites           OrganizationInvite[]   @relation("InviteSender")
 
   @@map("users")
 }
 
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  createdBy String   @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  creator      User                   @relation("OrganizationCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+  members      OrganizationMember[]
+  invites      OrganizationInvite[]
+  activeUsers  User[]                 @relation("ActiveOrganization")
+
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  role           String   @default("member")
+  status         String   @default("active")
+  joinedAt       DateTime @default(now()) @map("joined_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@map("organization_members")
+}
+
+model OrganizationInvite {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  inviterId      String   @map("inviter_id") @db.Uuid
+  email          String
+  token          String   @unique @default(dbgenerated("encode(gen_random_bytes(32), 'hex')"))
+  status         String   @default("pending")
+  expiresAt      DateTime @map("expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter      User         @relation("InviteSender", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("organization_invites")
+}
+
 model Conversation {
-  id        String   @id @default(uuid())
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title     String?
-  userId    String   @map("user_id")
+  userId    String   @map("user_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -34,8 +89,8 @@ model Conversation {
 }
 
 model Message {
-  id             String   @id @default(uuid())
-  conversationId String   @map("conversation_id")
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
   role           String  
   content        String
   tokensUsed     Int      @default(0) @map("tokens_used")

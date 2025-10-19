@@ -26,6 +26,12 @@ export interface AuthResponse {
     credits: number;
     createdAt: Date;
   };
+  organization?: {
+    id: string;
+    name: string;
+    createdBy: string;
+    createdAt: Date;
+  };
   token: string;
 }
 
@@ -58,33 +64,88 @@ export class AuthService {
   static async createUser(data: SignupData): Promise<AuthResponse> {
     const passwordHash = await hashPassword(data.password);
 
-    const user = await prisma.user.create({
-      data: {
-        username: data.username,
-        email: data.email || null,
-        passwordHash,
-        credits: 1250,
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        credits: true,
-        createdAt: true,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create user
+      const user = await tx.user.create({
+        data: {
+          username: data.username,
+          email: data.email || null,
+          passwordHash,
+          credits: 1250,
+        },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          credits: true,
+          createdAt: true,
+        },
+      });
+
+      // 2. Create default organization
+      const organizationName = `${data.username}'s organisation`;
+      const organization = await tx.organization.create({
+        data: {
+          name: organizationName,
+          createdBy: user.id,
+          members: {
+            create: {
+              userId: user.id,
+              role: "admin",
+              status: "active",
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          createdBy: true,
+          createdAt: true,
+        },
+      });
+
+      // 3. Set as active organization
+      const updatedUser = await tx.user.update({
+        where: { id: user.id },
+        data: { activeOrganizationId: organization.id },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          credits: true,
+          activeOrganizationId: true,
+          createdAt: true,
+        },
+      });
+
+      return { user: updatedUser, organization };
     });
 
     const token = generateToken({
-      userId: user.id,
-      username: user.username,
+      userId: result.user.id,
+      username: result.user.username,
     });
 
-    return { user, token };
+    return {
+      user: result.user,
+      organization: result.organization,
+      token,
+    };
   }
 
   static async findUserByUsername(username: string) {
     return await prisma.user.findUnique({
       where: { username },
+      include: {
+        activeOrganization: {
+          select: {
+            id: true,
+            name: true,
+            createdBy: true,
+            createdAt: true,
+          },
+        },
+      },
     });
   }
 
@@ -101,10 +162,14 @@ export class AuthService {
       username: user.username,
     });
 
-    const { passwordHash, ...userWithoutPassword } = user;
+    const { passwordHash, activeOrganization, ...userWithoutPassword } = user;
 
     return {
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutPassword,
+        activeOrganizationId: user.activeOrganizationId,
+      },
+      organization: activeOrganization || null,
       token,
     };
   }
@@ -117,6 +182,7 @@ export class AuthService {
         username: true,
         email: true,
         credits: true,
+        activeOrganizationId: true,
         createdAt: true,
         updatedAt: true,
       },

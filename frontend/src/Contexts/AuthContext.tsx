@@ -2,22 +2,32 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../services/api";
 import toast from "react-hot-toast";
 
+export interface Organization {
+  id: string;
+  name: string;
+  createdBy: string;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   username: string;
   email?: string;
   credits: number;
+  activeOrganizationId?: string | null;
 }
 
 export interface AuthContext {
   token: string | null;
   user: User | null;
+  organization: Organization | null;
   isLoading: boolean;
   error: string | null;
   signin: (username: string, password: string) => Promise<void>;
   signup: (username: string, password: string, email?: string) => Promise<void>;
   signout: () => void;
   updateCredits: (credits: number) => void;
+  updateOrganization: (organization: Organization) => void;
   clearError: () => void;
   isAuthenticated: boolean;
 }
@@ -31,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.getItem("token")
   );
   const [user, setUser] = useState<User | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,6 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setToken(response.token);
       setUser(response.user);
+      setOrganization(response.organization || null);
       localStorage.setItem("token", response.token);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signin failed";
@@ -97,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setToken(response.token);
       setUser(response.user);
+      setOrganization(response.organization || null);
       localStorage.setItem("token", response.token);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Signup failed";
@@ -114,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         toast.error(errorMessage);
       }
-      
+
       throw err;
     } finally {
       setIsLoading(false);
@@ -124,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signout = () => {
     setToken(null);
     setUser(null);
+    setOrganization(null);
     setError(null);
     localStorage.removeItem("token");
   };
@@ -132,6 +146,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (user) {
       setUser({ ...user, credits });
     }
+  };
+
+  const updateOrganization = (newOrganization: Organization) => {
+    setOrganization(newOrganization);
   };
 
   const clearError = () => {
@@ -143,12 +161,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         token,
         user,
+        organization,
         isLoading,
         error,
         signin,
         signup,
         signout,
         updateCredits,
+        updateOrganization,
         clearError,
         isAuthenticated: !!token && !!user,
       }}
@@ -157,6 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     </AuthContext.Provider>
   );
 };
+
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) {

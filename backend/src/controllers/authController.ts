@@ -13,12 +13,12 @@ export const signup = async (req: Request, res: Response) => {
       password: req.body.password,
     };
 
-    // I am darshika 
     const result = await AuthService.signup(signupData);
 
     res.status(201).json({
       message: "Account created successfully",
       user: result.user,
+      organization: result.organization,
       token: result.token,
     });
   } catch (error) {
@@ -70,6 +70,7 @@ export const signin = async (req: Request, res: Response) => {
     res.json({
       message: "Signed in successfully",
       user: result.user,
+      organization: result.organization,
       token: result.token,
     });
   } catch (error) {
@@ -78,7 +79,6 @@ export const signin = async (req: Request, res: Response) => {
     const errorMessage =
       error instanceof Error ? error.message : "Signin failed";
 
-    // Handle authentication errors
     if (errorMessage.includes("Invalid username or password")) {
       return res.status(401).json({
         error: "Authentication Failed",
@@ -86,7 +86,6 @@ export const signin = async (req: Request, res: Response) => {
       });
     }
 
-    // Generic error response
     res.status(500).json({
       error: "Signin Failed",
       message: "An unexpected error occurred. Please try again.",

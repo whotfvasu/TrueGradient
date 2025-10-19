@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoute.js";
 import chatRoutes from "./routes/chatRoute.js";
 import userRoutes from "./routes/userRoute.js";
+import organizationRoutes from "./routes/organizationRoute.js";
 import { prisma } from "./lib/prisma.js";
 
 dotenv.config();
@@ -19,14 +20,14 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/organizations", organizationRoutes);
 
 process.on("SIGINT", async () => {
   await prisma.$disconnect();
